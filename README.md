@@ -10,4 +10,4 @@ OnScrollListener will report scroll and scroll-finished events (use to implement
 a "current page number/position" view, for example). Much of the code for this
 class was adapted from the Workspace class from the official Launcher app (AOSP).
 
-modified from: http://code.google.com/p/deezapps-widgets/
+modified from [http://code.google.com/p/deezapps-widgets/](http://code.google.com/p/deezapps-widgets/)
