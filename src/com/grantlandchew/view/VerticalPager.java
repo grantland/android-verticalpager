@@ -255,8 +255,8 @@ public class VerticalPager extends ViewGroup {
         for (int i = 0; i < count; i++) {
             final View child = getChildAt(i);
             if (child.getVisibility() != View.GONE) {
-                child.layout(0, childTop, right - left, childTop + child.getMeasuredHeight());
-                childTop += child.getMeasuredHeight();
+                child.layout(0, childTop, right - left, childTop + pageHeight);
+                childTop += pageHeight;
             }
         }
     }
