@@ -62,13 +62,13 @@ import android.graphics.Rect;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.VelocityTracker;
 import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.view.ViewParent;
+import android.view.animation.DecelerateInterpolator;
 import android.widget.Scroller;
 
 /**
@@ -80,14 +80,16 @@ public class VerticalPager extends ViewGroup {
 
     private static final int INVALID_SCREEN = -1;
     public static final int SPEC_UNDEFINED = -1;
+    private static final int TOP = 0;
+    private static final int BOTTOM = 1;
 
     /**
      * The velocity at which a fling gesture will cause us to snap to the next screen
      */
     private static final int SNAP_VELOCITY = 1000;
 
-    //private int pageHeightSpec,
     private int pageHeight;
+    private int measuredHeight;
 
     private boolean mFirstLayout = true;
 
@@ -136,14 +138,14 @@ public class VerticalPager extends ViewGroup {
         //pageHeightSpec = a.getDimensionPixelSize(R.styleable.com_deezapps_widget_HorizontalPager_pageWidth, SPEC_UNDEFINED);
         //a.recycle();
 
-        init();
+        init(context);
     }
 
     /**
      * Initializes various states for this workspace.
      */
-    private void init() {
-        mScroller = new Scroller(getContext());
+    private void init(Context context) {
+        mScroller = new Scroller(getContext(), new DecelerateInterpolator());
         mCurrentPage = 0;
 
         final ViewConfiguration configuration = ViewConfiguration.get(getContext());
@@ -186,7 +188,14 @@ public class VerticalPager extends ViewGroup {
      * @return
      */
     private int getScrollYForPage(int whichPage) {
-        return (whichPage * pageHeight) - pageHeightPadding();
+    	int height = 0;
+    	for(int i = 0; i < whichPage; i++) {
+    		final View child = getChildAt(i);
+            if (child.getVisibility() != View.GONE) {
+	    		height += child.getHeight();
+            }
+    	}
+        return height - pageHeightPadding();
     }
 
     @Override
@@ -233,12 +242,12 @@ public class VerticalPager extends ViewGroup {
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
 
-        //pageHeight = pageHeightSpec == SPEC_UNDEFINED ? getMeasuredHeight() : pageHeightSpec;
-        pageHeight = getMeasuredHeight(); //Math.min(pageHeight, getMeasuredHeight());
+        pageHeight = getMeasuredHeight();
 
         final int count = getChildCount();
         for (int i = 0; i < count; i++) {
-            getChildAt(i).measure(MeasureSpec.makeMeasureSpec(getMeasuredWidth(), MeasureSpec.EXACTLY), heightMeasureSpec);
+            getChildAt(i).measure(MeasureSpec.makeMeasureSpec(getMeasuredWidth(), MeasureSpec.EXACTLY),
+            		MeasureSpec.makeMeasureSpec(pageHeight, MeasureSpec.UNSPECIFIED));
         }
 
         if (mFirstLayout) {
@@ -249,14 +258,22 @@ public class VerticalPager extends ViewGroup {
 
     @Override
     protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
-        int childTop = 0;
+        measuredHeight = 0;
 
         final int count = getChildCount();
+        int height;
         for (int i = 0; i < count; i++) {
             final View child = getChildAt(i);
             if (child.getVisibility() != View.GONE) {
-                child.layout(0, childTop, right - left, childTop + pageHeight);
-                childTop += pageHeight;
+            	if(i == 0) {
+            		child.getHeight();
+                    child.layout(0, measuredHeight, right - left, measuredHeight + (int)(pageHeight*.96));
+                    measuredHeight +=  (pageHeight*.96);
+            	} else {
+            		height = Math.max(pageHeight, child.getMeasuredHeight());
+                    child.layout(0, measuredHeight, right - left, measuredHeight + height);
+                    measuredHeight += height;
+            	}
             }
         }
     }
@@ -329,7 +346,7 @@ public class VerticalPager extends ViewGroup {
          */
         final int action = ev.getAction();
         if ((action == MotionEvent.ACTION_MOVE) && (mTouchState != TOUCH_STATE_REST)) {
-            Log.d(TAG, "onInterceptTouchEvent::shortcut=true");
+            //Log.d(TAG, "onInterceptTouchEvent::shortcut=true");
             return true;
         }
 
@@ -449,8 +466,9 @@ public class VerticalPager extends ViewGroup {
                     mLastMotionY = y;
 
                     // Apply friction to scrolling past boundaries.
-                    if (getScrollY() < 0 || getScrollY() > getChildAt(getChildCount() - 1).getBottom()) {
-                        deltaY /= 2;
+                    final int count = getChildCount();
+                    if (getScrollY() < 0 || getScrollY() + pageHeight > getChildAt(count - 1).getBottom()) {
+                    	deltaY /= 2;
                     }
 
                     scrollBy(0, deltaY);
@@ -462,14 +480,36 @@ public class VerticalPager extends ViewGroup {
                     velocityTracker.computeCurrentVelocity(1000, mMaximumVelocity);
                     int velocityY = (int) velocityTracker.getYVelocity();
 
-                    if (velocityY > SNAP_VELOCITY && mCurrentPage > 0) {
-                        // Fling hard enough to move left
-                        snapToPage(mCurrentPage - 1);
-                    } else if (velocityY < -SNAP_VELOCITY && mCurrentPage < getChildCount() - 1) {
-                        // Fling hard enough to move right
-                        snapToPage(mCurrentPage + 1);
+                    final int count = getChildCount();
+
+                    // check scrolling past first or last page?
+                    if(getScrollY() < 0) {
+                    	snapToPage(0);
+                    } else if(getScrollY() > measuredHeight - pageHeight) {
+                    	snapToPage(count - 1, BOTTOM);
                     } else {
-                        snapToDestination();
+	                    for(int i = 0; i < count; i++) {
+	                    	if(getChildAt(i).getTop() < getScrollY() &&
+	                    			getChildAt(i).getBottom() > getScrollY() + pageHeight) {
+	                    		// we're inside a page, fling that bitch
+	                    		mNextPage = i;
+	                    		mScroller.fling(getScrollX(), getScrollY(), 0, -velocityY, 0, 0, getChildAt(i).getTop(), getChildAt(i).getBottom() - getHeight());
+	                			invalidate();
+	                			break;
+	                    	} else if(getChildAt(i).getBottom() > getScrollY()) {
+	                    		// stuck in between pages, oh snap!
+		                    	if(velocityY < -SNAP_VELOCITY) {
+	                    			snapToPage(i + 1);
+		                    	} else if(velocityY > SNAP_VELOCITY) {
+	                    			snapToPage(i, BOTTOM);
+		                    	} else if(getScrollY() + pageHeight/2 > getChildAt(i).getBottom()) {
+	                    			snapToPage(i + 1);
+	                    		} else {
+	                    			snapToPage(i, BOTTOM);
+	                    		}
+	                    		break;
+	                    	}
+	                    }
                     }
 
                     if (mVelocityTracker != null) {
@@ -486,19 +526,7 @@ public class VerticalPager extends ViewGroup {
         return true;
     }
 
-    private void snapToDestination() {
-        final int startY = getScrollYForPage(mCurrentPage);
-        int whichPage = mCurrentPage;
-        if (getScrollY() < startY - getHeight()/2) {
-            whichPage = Math.max(0, whichPage-1);
-        } else if (getScrollY() > startY + getHeight()/2) {
-            whichPage = Math.min(getChildCount()-1, whichPage+1);
-        }
-
-        snapToPage(whichPage);
-    }
-
-    public void snapToPage(int whichPage) {
+    private void snapToPage(final int whichPage, final int where) {
         enableChildrenCache();
 
         boolean changingPages = whichPage != mCurrentPage;
@@ -510,10 +538,19 @@ public class VerticalPager extends ViewGroup {
             focusedChild.clearFocus();
         }
 
-        final int newY = getScrollYForPage(whichPage);
-        final int delta = newY - getScrollY();
-        mScroller.startScroll(0, getScrollY(), 0, delta, Math.abs(delta) * 2);
+        final int delta;
+        if(getChildAt(whichPage).getHeight() <= pageHeight || where == TOP) {
+            delta = getChildAt(whichPage).getTop() - getScrollY();
+        } else {
+        	delta = getChildAt(whichPage).getBottom() - pageHeight - getScrollY();
+        }
+
+        mScroller.startScroll(0, getScrollY(), 0, delta, 400);
         invalidate();
+    }
+
+    public void snapToPage(final int whichPage) {
+    	snapToPage(whichPage, TOP);
     }
 
     @Override

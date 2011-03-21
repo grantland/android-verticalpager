@@ -5,14 +5,12 @@
               android:layout_width="fill_parent"
               android:layout_height="fill_parent"
     >
-
     <com.grantlandchew.view.VerticalPager
         android:id="@+id/pager"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:layout_weight="1"
         >
-
         <TextView
             android:layout_width="fill_parent"
             android:layout_height="fill_parent"
@@ -21,63 +19,20 @@
             android:text="Text 1"
             android:focusable="true"
             />
-
+        <LinearLayout
+            android:id="@+id/list"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:orientation="vertical"
+            >
+        </LinearLayout>
         <TextView
             android:layout_width="fill_parent"
             android:layout_height="fill_parent"
             android:gravity="center"
-            android:background="#00a"
-            android:text="Text 2"
-            android:focusable="true"
-            />
-
-        <Button
-            android:layout_width="fill_parent"
-            android:layout_height="fill_parent"
+            android:background="#0a0"
             android:text="Text 3"
-            />
-
-        <TextView
-            android:layout_width="fill_parent"
-            android:layout_height="fill_parent"
-            android:gravity="center"
-            android:background="#a00"
-            android:text="Text 4"
             android:focusable="true"
             />
-
-        <TextView
-            android:layout_width="fill_parent"
-            android:layout_height="fill_parent"
-            android:gravity="center"
-            android:background="#0aa"
-            android:text="Text 5"
-            android:focusable="true"
-            />
-
     </com.grantlandchew.view.VerticalPager>
-
-    <LinearLayout
-        android:orientation="horizontal"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        >
-
-        <Button
-            android:id="@+id/up"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Up"
-            />
-        <Button
-            android:id="@+id/down"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Down"
-            />
-
-    </LinearLayout>
-
 </LinearLayout>

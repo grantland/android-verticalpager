@@ -54,8 +54,8 @@ package com.grantlandchew.example.verticalpager;
 
 import android.app.Activity;
 import android.os.Bundle;
-import android.view.View;
-import android.widget.Button;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 
 import com.grantlandchew.view.VerticalPager;
 
@@ -73,6 +73,16 @@ public class TestActivity extends Activity {
         setContentView(R.layout.main);
 
         final VerticalPager pager = (VerticalPager) findViewById(R.id.pager);
+        final LinearLayout list = (LinearLayout) findViewById(R.id.list);
+
+        TextView text;
+
+        for(int i = 0; i < 30; i++ ) {
+	        text = new TextView(this);
+	        text.setText("test: "+i);
+	        text.setTextSize(30);
+	        list.addView(text);
+        }
 
         pager.addOnScrollListener(new VerticalPager.OnScrollListener() {
             public void onScroll(int scrollX) {
@@ -83,20 +93,5 @@ public class TestActivity extends Activity {
                 //Log.d("TestActivity", "viewIndex=" + currentPage);
             }
         });
-
-        Button b = (Button) findViewById(R.id.up);
-        b.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View view) {
-                pager.scrollUp();
-            }
-        });
-        b = (Button) findViewById(R.id.down);
-        b.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View view) {
-                pager.scrollDown();
-            }
-        });
-
-
     }
 }
