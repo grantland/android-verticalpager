@@ -76,7 +76,7 @@ import android.widget.Scroller;
  * @since Feb 13, 2011
  */
 public class VerticalPager extends ViewGroup {
-    public static final String TAG = "DeezApps.Widget.HorizontalPager";
+    public static final String TAG = "VerticalPager";
 
     private static final int INVALID_SCREEN = -1;
     public static final int SPEC_UNDEFINED = -1;
@@ -270,7 +270,8 @@ public class VerticalPager extends ViewGroup {
                     child.layout(0, measuredHeight, right - left, measuredHeight + (int)(pageHeight*.96));
                     measuredHeight +=  (pageHeight*.96);
             	} else {
-            		height = Math.max(pageHeight, child.getMeasuredHeight());
+            		height = pageHeight * (int)Math.ceil((double)child.getMeasuredHeight()/(double)pageHeight);
+            		height = Math.max(pageHeight, height);
                     child.layout(0, measuredHeight, right - left, measuredHeight + height);
                     measuredHeight += height;
             	}
