@@ -490,20 +490,21 @@ public class VerticalPager extends ViewGroup {
                     	snapToPage(count - 1, BOTTOM);
                     } else {
 	                    for(int i = 0; i < count; i++) {
-	                    	if(getChildAt(i).getTop() < getScrollY() &&
-	                    			getChildAt(i).getBottom() > getScrollY() + pageHeight) {
+	                    	final View child = getChildAt(i);
+	                    	if(child.getTop() < getScrollY() &&
+	                    			child.getBottom() > getScrollY() + pageHeight) {
 	                    		// we're inside a page, fling that bitch
 	                    		mNextPage = i;
-	                    		mScroller.fling(getScrollX(), getScrollY(), 0, -velocityY, 0, 0, getChildAt(i).getTop(), getChildAt(i).getBottom() - getHeight());
+	                    		mScroller.fling(getScrollX(), getScrollY(), 0, -velocityY, 0, 0, child.getTop(), child.getBottom() - getHeight());
 	                			invalidate();
 	                			break;
-	                    	} else if(getChildAt(i).getBottom() > getScrollY()) {
+	                    	} else if(child.getBottom() > getScrollY() && child.getBottom() < getScrollY() + getHeight()) {
 	                    		// stuck in between pages, oh snap!
 		                    	if(velocityY < -SNAP_VELOCITY) {
 	                    			snapToPage(i + 1);
 		                    	} else if(velocityY > SNAP_VELOCITY) {
 	                    			snapToPage(i, BOTTOM);
-		                    	} else if(getScrollY() + pageHeight/2 > getChildAt(i).getBottom()) {
+		                    	} else if(getScrollY() + pageHeight/2 > child.getBottom()) {
 	                    			snapToPage(i + 1);
 	                    		} else {
 	                    			snapToPage(i, BOTTOM);
